@@ -1,5 +1,6 @@
-env:
-  SDK_DIR: ./SDK
+name: build
+
+on: [workflow_dispatch]
 jobs:
   build:
     runs-on: windows-2022
