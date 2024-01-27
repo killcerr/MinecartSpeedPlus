@@ -1,42 +1,42 @@
-name: build
-
-on: [workflow_dispatch]
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+  
 jobs:
   build:
-    runs-on: windows-2022
-
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3.2.0
+      - uses: actions/checkout@v4
+
+      - uses: xmake-io/github-action-setup-xmake@v1
+      
+      - run: |
+          xmake repo -u
+
+      - run: |
+          xmake f -a x64 -m release -p windows -v -y
+
+      - run: |
+          xmake -w -y
+
+      - uses: actions/upload-artifact@v3
         with:
-          submodules: "true"
+          name: ${{ github.event.repository.name }}-windows-x64-${{ github.sha }}
+          path: |
+            bin/
 
-      - name: Download Server
-        working-directory: ${{ env.GITHUB_WORKSPACE }}
-        run: |
-          cd ./SDK/tools
-          curl -L -o ./server.zip "https://minecraft.azureedge.net/bin-win/bedrock-server-1.20.30.02.zip"
-          unzip server.zip
-        shell: bash
+  check-style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Build Library
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: |
-          cd ./SDK/tools
-          ./PeEditor.exe -l
-          cp bedrock_server_var.lib ../lib
-          cp bedrock_server_api.lib ../lib
-        shell: bash
-
-      - name: Build
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: |
-          mkdir build
-          cmake -B ./build -DCMAKE_BUILD_TYPE=Release
-          cmake --build ./build --config Release --target ALL_BUILD
-        shell: cmd
-
-      - name: Upload Plugin
-        uses: actions/upload-artifact@v3.1.0
+      - uses: actions/setup-node@v3
         with:
-          name: build
-          path: ${{ github.workspace }}/build/Release/
+          node-version: 18
+
+      - run: |
+          npm install clang-format@1.8.0
+
+      - run: |
+          npx clang-format --dry-run --Werror $(find . -type f -name '*.cpp' -o -name '*.h')
