@@ -6,7 +6,7 @@ if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
 
-add_requires("levilamina 0.5.1")
+add_requires("levilamina")
 
 target("MinecartSpeedPlus")
     add_toolchains("msvc")
