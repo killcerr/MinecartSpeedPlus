@@ -11,7 +11,7 @@
             "levilamina"
         ]
     },
-    "asset_url": "https://github.com/killcerr/MinecartSpeedPlus/releases/download/v0.1.3/MinecartSpeedPlus-windows-x64.zip",
+    "asset_url": "https://github.com/killcerr/MinecartSpeedPlus/releases/download/v0.1.4/MinecartSpeedPlus-windows-x64.zip",
     "prerequisites": {
         "github.com/LiteLDev/LeviLamina": ">=0.11.0"
     },
