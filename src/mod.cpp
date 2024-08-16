@@ -13,7 +13,7 @@ static std::unique_ptr<Mod> mod{};
 Mod& Mod::getInstance() { return *mod; }
 
 Mod::Mod(ll::mod::NativeMod& self) : mSelf(self) {
-    mSelf.getLogger().info("loading...");
+    // mSelf.getLogger().info("loading...");
 
     // Code for loading the mod goes here.
 }
@@ -21,7 +21,7 @@ Mod::Mod(ll::mod::NativeMod& self) : mSelf(self) {
 ll::mod::NativeMod& Mod::getSelf() const { return mSelf; }
 
 bool Mod::enable() {
-    mSelf.getLogger().info("enabling...");
+    // mSelf.getLogger().info("enabling...");
     ModInit();
     // Code for enabling the mod goes here.
 
@@ -29,7 +29,7 @@ bool Mod::enable() {
 }
 
 bool Mod::disable() {
-    mSelf.getLogger().info("disabling...");
+    // mSelf.getLogger().info("disabling...");
 
     // Code for disabling the mod goes here.
 

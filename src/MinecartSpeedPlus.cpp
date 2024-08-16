@@ -7,6 +7,7 @@ ll::Logger logger("MinecartSpeedPlus");
 struct {
     float GoldenRailMul;
     float CommonRailMul;
+    float ClimbRailMul;
 } gcfg;
 
 void ModInit() {
@@ -20,13 +21,15 @@ void ModInit() {
         auto cfg           = nlohmann::json::parse(c, nullptr, false, true);
         gcfg.GoldenRailMul = cfg["GoldenRailMul"].get<float>();
         gcfg.CommonRailMul = cfg["CommonRailMul"].get<float>();
+        gcfg.ClimbRailMul  = cfg["ClimbRailMul"].get<float>();
     } else {
         std::ofstream fout("./plugins/MinecartSpeedPlus/cfg.json");
-        fout << R"({"GoldenRailMul":0.0,"CommonRailMul":0.0})";
-        gcfg.GoldenRailMul = 0.0;
-        gcfg.CommonRailMul = 0.0;
+        fout << R"({"GoldenRailMul":1.0,"CommonRailMul":1.0,"ClimbRailMul":1.0})";
+        gcfg.GoldenRailMul = 1.0;
+        gcfg.CommonRailMul = 1.0;
+        gcfg.ClimbRailMul  = 1.0;
     }
-    logger.info("MinecartSpeeedPlus by killcerr loaded");
+    logger.info("MinecartSpeedPlus by killcerr loaded");
 }
 
 #include <ll/api/memory/Hook.h>
@@ -74,5 +77,6 @@ LL_AUTO_TYPE_STATIC_HOOK(
         flag  = false;
         res  *= gcfg.GoldenRailMul;
     }
+    if (res.y > 0) res.y *= gcfg.ClimbRailMul;
     return res;
 }
