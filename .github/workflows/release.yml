@@ -2,7 +2,7 @@ on:
   release:
     types:
       - published
-  
+
 jobs:
   build:
     runs-on: windows-latest
@@ -11,8 +11,8 @@ jobs:
 
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
-          xmake-version: branch@dev
-  
+          xmake-version: "2.9.3"
+
       - run: |
           xmake repo -u
 

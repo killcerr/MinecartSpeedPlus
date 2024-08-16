@@ -6,5 +6,6 @@ Diagnostics:
     - "-Wmicrosoft-cast"
 CompileFlags:
   Add:
+    - "-std=c++23"
     - "-ferror-limit=0"
     - '-D__FUNCTION__="dummy"'

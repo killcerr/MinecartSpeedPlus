@@ -5,7 +5,16 @@ function beautify_json(value, indent)
 
     local function escape_str(s)
         return string.gsub(s, '[%c\\"]', function(c)
-            local replacements = {['\b'] = '\\b', ['\f'] = '\\f', ['\n'] = '\\n', ['\r'] = '\\r', ['\t'] = '\\t', ['"'] = '\\"', ['\\'] = '\\\\'}
+            local replacements = {
+                ['\b'] = '\\b',
+                ['\f'] = '\\f',
+                ['\n'] = '\\n',
+                ['\r'] = '\\r',
+                ['\t'] = '\\t',
+                ['"'] =
+                '\\"',
+                ['\\'] = '\\\\'
+            }
             return replacements[c] or string.format('\\u%04x', c:byte())
         end)
     end
@@ -54,7 +63,8 @@ function beautify_json(value, indent)
                 json_text = json_text .. ",\n"
             end
 
-            json_text = string.sub(json_text, 1, -3) .. "\n" .. string.rep(" ", (level - 1) * indent) .. (isArray and "]" or "}")
+            json_text = string.sub(json_text, 1, -3) ..
+                "\n" .. string.rep(" ", (level - 1) * indent) .. (isArray and "]" or "}")
             stack[val] = nil
         elseif type(val) == "string" then
             json_text = json_text .. '"' .. escape_str(val) .. '"'
@@ -82,7 +92,7 @@ function string_formatter(str, variables)
     end)
 end
 
-function pack_plugin(target,plugin_define)
+function pack_plugin(target, plugin_define)
     import("lib.detect.find_file")
 
     local manifest_path = find_file("manifest.json", os.projectdir())
@@ -103,13 +113,12 @@ function pack_plugin(target,plugin_define)
         end
 
         formattedmanifest = string_formatter(manifest, plugin_define)
-        io.writefile(manifestfile,formattedmanifest)
-        cprint("${bright green}[Plugin Packer]: ${reset}plugin already generated to " .. outputdir)
+        io.writefile(manifestfile, formattedmanifest)
+        cprint("${bright green}[Mod Packer]: ${reset}Mod already generated to " .. outputdir)
     else
         cprint("${bright yellow}warn: ${reset}not found manifest.json in root dir!")
     end
 end
-
 
 return {
     pack_plugin = pack_plugin,

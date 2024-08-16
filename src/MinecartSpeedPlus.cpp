@@ -9,7 +9,7 @@ struct {
     float CommonRailMul;
 } gcfg;
 
-void PluginInit() {
+void ModInit() {
     std::filesystem::create_directories("./plugins/MinecartSpeedPlus/");
     if (std::filesystem::exists("./plugins/MinecartSpeedPlus/cfg.json")) {
         std::ifstream fin("./plugins/MinecartSpeedPlus/cfg.json");
