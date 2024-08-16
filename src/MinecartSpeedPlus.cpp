@@ -8,7 +8,7 @@ struct {
     float GoldenRailMul;
     float CommonRailMul;
     float ClimbRailMul;
-} gcfg;
+} gcfg{1.0, 1.0, 1.0};
 
 void ModInit() {
     std::filesystem::create_directories("./plugins/MinecartSpeedPlus/");
@@ -18,10 +18,10 @@ void ModInit() {
         while (std::getline(fin, l)) {
             c += l + '\n';
         }
-        auto cfg           = nlohmann::json::parse(c, nullptr, false, true);
-        gcfg.GoldenRailMul = cfg["GoldenRailMul"].get<float>();
-        gcfg.CommonRailMul = cfg["CommonRailMul"].get<float>();
-        gcfg.ClimbRailMul  = cfg["ClimbRailMul"].get<float>();
+        auto cfg = nlohmann::json::parse(c, nullptr, false, true);
+        if (cfg.contains("GoldenRailMul")) gcfg.GoldenRailMul = cfg["GoldenRailMul"].get<float>();
+        if (cfg.contains("CommonRailMul")) gcfg.CommonRailMul = cfg["CommonRailMul"].get<float>();
+        if (cfg.contains("ClimbRailMul")) gcfg.ClimbRailMul = cfg["ClimbRailMul"].get<float>();
     } else {
         std::ofstream fout("./plugins/MinecartSpeedPlus/cfg.json");
         fout << R"({"GoldenRailMul":1.0,"CommonRailMul":1.0,"ClimbRailMul":1.0})";
