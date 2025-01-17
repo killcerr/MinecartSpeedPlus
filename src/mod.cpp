@@ -28,8 +28,14 @@ bool Mod::enable() /*NOLINT*/ {
 bool Mod::disable() /*NOLINT*/ {
     getSelf().getLogger().debug("Disabling...");
     // Code for disabling the mod goes here.
-    return true;
     ModDeinit();
+    return true;
+}
+
+bool Mod::unload() /*NOLINT*/ {
+    getSelf().getLogger().debug("Unloading...");
+    // Code for disabling the mod goes here.
+    return true;
 }
 
 } // namespace mod

@@ -24,7 +24,7 @@ public:
 
     // TODO: Implement this method if you need to unload the mod.
     // /// @return True if the mod is unloaded successfully.
-    // bool unload();
+    bool unload();
 
 private:
     ll::mod::NativeMod& mSelf;

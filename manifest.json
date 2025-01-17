@@ -1,5 +1,5 @@
 {
-    "name": "${pluginName}",
-    "entry": "${pluginFile}",
-    "type": "native"
+  "name": "MinecartSpeedPlus",
+  "entry": "MinecartSpeedPlus.dll",
+  "type": "native"
 }

@@ -17,7 +17,7 @@ void ModInit() {
     std::filesystem::create_directories(configDir);
     auto json = ll::reflection::serialize<nlohmann::json>(cfg);
     if (std::filesystem::exists(configDir / "config.json")) {
-        json->patch_inplace(
+        json->merge_patch(
             nlohmann::json::parse(std::fstream{configDir / "config.json", std::ios::in}, nullptr, true, true)
         );
     } else {
