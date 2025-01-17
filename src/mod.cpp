@@ -1,58 +1,37 @@
 #include "mod.h"
 
-#include <ll/api/mod/NativeMod.h>
+#include "ll/api/memory/Hook.h"
+#include "ll/api/mod/RegisterHelper.h"
+
 
 extern void ModInit();
-
+extern void ModDeinit();
 namespace mod {
 
-Mod::~Mod() = default;
-
-static std::unique_ptr<Mod> mod{};
-
-Mod& Mod::getInstance() { return *mod; }
-
-Mod::Mod(ll::mod::NativeMod& self) : mSelf(self) {
-    // mSelf.getLogger().info("loading...");
-
-    // Code for loading the mod goes here.
+Mod& Mod::getInstance() {
+    static Mod instance;
+    return instance;
 }
 
-ll::mod::NativeMod& Mod::getSelf() const { return mSelf; }
+bool Mod::load() /*NOLINT*/ {
+    getSelf().getLogger().debug("Loading...");
+    return true;
+}
 
-bool Mod::enable() {
-    // mSelf.getLogger().info("enabling...");
-    ModInit();
+bool Mod::enable() /*NOLINT*/ {
+    getSelf().getLogger().debug("Enabling...");
     // Code for enabling the mod goes here.
-
+    ModInit();
     return true;
 }
 
-bool Mod::disable() {
-    // mSelf.getLogger().info("disabling...");
-
+bool Mod::disable() /*NOLINT*/ {
+    getSelf().getLogger().debug("Disabling...");
     // Code for disabling the mod goes here.
-
     return true;
-}
-
-extern "C" {
-_declspec(dllexport) bool ll_mod_load(ll::mod::NativeMod& self) {
-    mod = std::make_unique<mod::Mod>(self);
-    return true;
-}
-
-/// @warning Unloading the mod may cause a crash if the mod has not released all of its
-/// resources. If you are unsure, keep this function commented out.
-// _declspec(dllexport) bool ll_mod_unload(ll::mod::Mod&) {
-//     mod.reset();
-//
-//     return true;
-// }
-
-_declspec(dllexport) bool ll_mod_enable(ll::mod::NativeMod&) { return mod->enable(); }
-
-_declspec(dllexport) bool ll_mod_disable(ll::mod::NativeMod&) { return mod->disable(); }
+    ModDeinit();
 }
 
 } // namespace mod
+
+LL_REGISTER_MOD(mod::Mod, mod::Mod::getInstance());

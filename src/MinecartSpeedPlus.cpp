@@ -1,49 +1,46 @@
+#include "mod.h"
+
 #include <Nlohmann/json.hpp>
 #include <filesystem>
-#include <ll/api/Logger.h>
+#include <ll/api/Config.h>
+#include <ll/api/io/Logger.h>
 
-ll::Logger logger("MinecartSpeedPlus");
 
 struct {
     float GoldenRailMul;
     float CommonRailMul;
     float ClimbRailMul;
-} gcfg{1.0, 1.0, 1.0};
+} cfg{1.0, 1.0, 1.0};
 
 void ModInit() {
-    std::filesystem::create_directories("./plugins/MinecartSpeedPlus/");
-    if (std::filesystem::exists("./plugins/MinecartSpeedPlus/cfg.json")) {
-        std::ifstream fin("./plugins/MinecartSpeedPlus/cfg.json");
-        std::string   c, l;
-        while (std::getline(fin, l)) {
-            c += l + '\n';
-        }
-        auto cfg = nlohmann::json::parse(c, nullptr, false, true);
-        if (cfg.contains("GoldenRailMul")) gcfg.GoldenRailMul = cfg["GoldenRailMul"].get<float>();
-        if (cfg.contains("CommonRailMul")) gcfg.CommonRailMul = cfg["CommonRailMul"].get<float>();
-        if (cfg.contains("ClimbRailMul")) gcfg.ClimbRailMul = cfg["ClimbRailMul"].get<float>();
+    const auto configDir = mod::Mod::getInstance().getSelf().getConfigDir();
+    std::filesystem::create_directories(configDir);
+    auto json = ll::reflection::serialize<nlohmann::json>(cfg);
+    if (std::filesystem::exists(configDir / "config.json")) {
+        json->patch_inplace(
+            nlohmann::json::parse(std::fstream{configDir / "config.json", std::ios::in}, nullptr, true, true)
+        );
     } else {
-        std::ofstream fout("./plugins/MinecartSpeedPlus/cfg.json");
-        fout << R"({"GoldenRailMul":1.0,"CommonRailMul":1.0,"ClimbRailMul":1.0})";
-        gcfg.GoldenRailMul = 1.0;
-        gcfg.CommonRailMul = 1.0;
-        gcfg.ClimbRailMul  = 1.0;
+        std::fstream{configDir / "config.json", std::ios::out} << *json;
     }
-    logger.info("MinecartSpeedPlus by killcerr loaded");
+    ll::reflection::deserialize(cfg, *json).value();
+    mod::Mod::getInstance().getSelf().getLogger().info("MinecartSpeedPlus by killcerr loaded");
 }
 
 #include <ll/api/memory/Hook.h>
+#include <ll/api/memory/Symbol.h>
+#include <mc/deps/core/math/Vec3.h>
 #include <mc/entity/utilities/RailMovementUtility.h>
-#include <mc/math/Vec3.h>
 
 
 bool flag = false;
+using namespace ll::literals;
 
-LL_AUTO_TYPE_STATIC_HOOK(
+LL_AUTO_TYPE_STATIC_HOOK /*NOLINT*/ (
     calculateGoldenRailSpeedIncreaseHook,
     HookPriority::Normal,
     RailMovementUtility,
-    "?calculateGoldenRailSpeedIncrease@RailMovementUtility@@SA?AVVec3@@AEBVIConstBlockSource@@AEBVBlockPos@@HV2@@Z",
+    "?calculateGoldenRailSpeedIncrease@RailMovementUtility@@SA?AVVec3@@AEBVIConstBlockSource@@AEBVBlockPos@@HV2@@Z"_sym,
     Vec3,
     class IConstBlockSource const& a,
     class BlockPos const&          b,
@@ -55,12 +52,11 @@ LL_AUTO_TYPE_STATIC_HOOK(
     return res;
 }
 
-LL_AUTO_TYPE_STATIC_HOOK(
+LL_AUTO_TYPE_STATIC_HOOK /*NOLINT*/ (
     calculateMoveVelocityHook,
     HookPriority::Normal,
     RailMovementUtility,
-    "?calculateMoveVelocity@RailMovementUtility@@SA?AVVec3@@AEBVBlock@@HM_NAEAV2@AEA_N3AEBV?$function@$$A6A_NAEAVVec3@@"
-    "@Z@std@@@Z",
+    "?calculateMoveVelocity@RailMovementUtility@@SA?AVVec3@@AEBVBlock@@HM_NAEAV2@AEA_N3AEBV?$function@$$A6A_NAEAVVec3@@@Z@std@@@Z"_sym,
     Vec3,
     class Block const&                            a,
     int                                           b,
@@ -72,11 +68,18 @@ LL_AUTO_TYPE_STATIC_HOOK(
     class std::function<bool(class Vec3&)> const& h
 ) {
     auto res = origin(a, b, c, d, e, f, g, h);
-    if (!flag) res *= gcfg.CommonRailMul;
+    if (!flag) res *= cfg.CommonRailMul;
     else {
         flag  = false;
-        res  *= gcfg.GoldenRailMul;
+        res  *= cfg.GoldenRailMul;
     }
-    if (res.y > 0) res.y *= gcfg.ClimbRailMul;
+    if (res.y > 0) res.y *= cfg.ClimbRailMul;
     return res;
+}
+
+
+void ModDeinit() {
+    calculateGoldenRailSpeedIncreaseHook::unhook();
+    calculateMoveVelocityHook::unhook();
+    mod::Mod::getInstance().getSelf().getLogger().info("MinecartSpeedPlus by killcerr unloaded");
 }
