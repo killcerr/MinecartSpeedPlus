@@ -10,7 +10,8 @@ struct {
     float GoldenRailMul;
     float CommonRailMul;
     float ClimbRailMul;
-} cfg{1.0, 1.0, 1.0};
+    bool  EnableMinecartAABBHook;
+} cfg{1.0, 1.0, 1.0, false};
 
 void ModInit() {
     const auto configDir = mod::Mod::getInstance().getSelf().getConfigDir();
@@ -77,6 +78,17 @@ LL_AUTO_TYPE_STATIC_HOOK /*NOLINT*/ (
     return res;
 }
 
+#include "mc/entity/components_json_legacy/PushableComponent.h"
+#include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorType.h"
+#include "mc/world/phys/AABB.h"
+LL_AUTO_TYPE_INSTANCE_HOOK(MinecartAABBHook, HookPriority::Normal, Actor, &Actor::getAABB, AABB const&) {
+    static AABB box{Vec3::ZERO(), Vec3::ZERO()};
+    if (cfg.EnableMinecartAABBHook
+        && (static_cast<int>(getEntityTypeId()) & static_cast<int>(ActorType::Minecart)) == 0x80000)
+        return box;
+    return origin();
+}
 
 void ModDeinit() {
     calculateGoldenRailSpeedIncreaseHook::unhook();
