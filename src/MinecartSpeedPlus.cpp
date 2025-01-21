@@ -7,11 +7,13 @@
 
 
 struct {
+    int   version;
     float GoldenRailMul;
     float CommonRailMul;
     float ClimbRailMul;
     bool  EnableMinecartAABBHook;
 } cfg{
+    .version                = 0,
     .GoldenRailMul          = 1.0,
     .CommonRailMul          = 1.0,
     .ClimbRailMul           = 1.0,
@@ -21,15 +23,11 @@ struct {
 void ModInit() {
     const auto configDir = mod::Mod::getInstance().getSelf().getConfigDir();
     std::filesystem::create_directories(configDir);
-    auto json = ll::reflection::serialize<nlohmann::json>(cfg);
     if (std::filesystem::exists(configDir / "config.json")) {
-        json->merge_patch(
-            nlohmann::json::parse(std::fstream{configDir / "config.json", std::ios::in}, nullptr, true, true)
-        );
+        ll::config::loadConfig(cfg, configDir / "config.json");
     } else {
-        std::fstream{configDir / "config.json", std::ios::out} << *json;
+        ll::config::saveConfig(cfg, configDir / "config.json");
     }
-    ll::reflection::deserialize(cfg, *json).value();
     mod::Mod::getInstance().getSelf().getLogger().info("MinecartSpeedPlus by killcerr loaded");
 }
 
