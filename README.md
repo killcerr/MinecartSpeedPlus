@@ -1,2 +1,2 @@
 # MinecartSpeedPlus
-control speed of minecart in game.
+control the speed of minecart in game.
