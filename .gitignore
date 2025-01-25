@@ -549,3 +549,6 @@ fabric.properties
 /.idea/
 /.vscode/
 /bin/
+
+# run script
+*.ps1
