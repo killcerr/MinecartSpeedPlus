@@ -132,5 +132,6 @@ void ModDeinit() {
     calculateGoldenRailSpeedIncreaseHook::unhook();
     calculateMoveVelocityHook::unhook();
     minecartAABBHook::unhook();
+    MinecartPushHook::unhook();
     mod::Mod::getInstance().getSelf().getLogger().info("MinecartSpeedPlus by killcerr unloaded");
 }
