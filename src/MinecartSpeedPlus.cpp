@@ -100,7 +100,7 @@ LL_AUTO_TYPE_INSTANCE_HOOK(minecartAABBHook, HookPriority::Normal, Actor, &Actor
 }
 // using RetT = ::std::pair<::Vec3, ::Vec3>;
 LL_AUTO_TYPE_INSTANCE_HOOK(
-    fixPullToRideHook,
+    minecartPushHook,
     HookPriority::Normal,
     PushableComponent,
     &PushableComponent::push,
@@ -132,6 +132,6 @@ void ModDeinit() {
     calculateGoldenRailSpeedIncreaseHook::unhook();
     calculateMoveVelocityHook::unhook();
     minecartAABBHook::unhook();
-    MinecartPushHook::unhook();
+    minecartPushHook::unhook();
     mod::Mod::getInstance().getSelf().getLogger().info("MinecartSpeedPlus by killcerr unloaded");
 }
