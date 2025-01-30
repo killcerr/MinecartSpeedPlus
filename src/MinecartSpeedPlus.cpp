@@ -13,13 +13,17 @@ struct {
     float ClimbRailMul;
     bool  EnableMinecartAABBHook;
     bool  EnableMinecartPushHook;
+    bool  EnableNewMode;
+    bool  EnableComeOutRailFix;
 } cfg{
     .version                = 1,
-    .GoldenRailMul          = 1.0,
-    .CommonRailMul          = 1.0,
-    .ClimbRailMul           = 1.0,
+    .GoldenRailMul          = 10.0,
+    .CommonRailMul          = 2.0,
+    .ClimbRailMul           = 15.0,
     .EnableMinecartAABBHook = false,
     .EnableMinecartPushHook = false,
+    .EnableNewMode          = true,
+    .EnableComeOutRailFix   = true,
 };
 
 
@@ -27,7 +31,19 @@ void ModInit() {
     const auto configDir = mod::Mod::getInstance().getSelf().getConfigDir();
     std::filesystem::create_directories(configDir);
     if (std::filesystem::exists(configDir / "config.json")) {
-        ll::config::loadConfig(cfg, configDir / "config.json");
+        try {
+            ll::config::loadConfig(cfg, configDir / "config.json");
+        } catch (...) {
+            mod::Mod::getInstance().getSelf().getLogger().warn("rewrite config");
+            auto oldConfigPath =
+                configDir
+                / (std::string{
+                    "config.json." + std::format("{0:%y.%m.%d-%H.%M.%S-%z}", std::chrono::system_clock::now()) + ".bak"
+                });
+            std::filesystem::rename(configDir / "config.json", oldConfigPath);
+            mod::Mod::getInstance().getSelf().getLogger().warn("old config is saved to {}", oldConfigPath);
+            ll::config::saveConfig(cfg, configDir / "config.json");
+        }
     } else {
         ll::config::saveConfig(cfg, configDir / "config.json");
     }
@@ -37,7 +53,9 @@ void ModInit() {
 #include <ll/api/memory/Hook.h>
 #include <ll/api/memory/Symbol.h>
 #include <mc/deps/core/math/Vec3.h>
+#include <mc/deps/core/string/HashedString.h>
 #include <mc/entity/utilities/RailMovementUtility.h>
+#include <mc/world/level/block/Block.h>
 
 
 bool flag = false;
@@ -58,7 +76,7 @@ LL_AUTO_TYPE_STATIC_HOOK /*NOLINT*/ (
     flag     = true;
     return res;
 }
-
+bool eqf(float a, float b) { return fabs(a - b) < 0.1; }
 LL_AUTO_TYPE_STATIC_HOOK /*NOLINT*/ (
     calculateMoveVelocityHook,
     HookPriority::Normal,
@@ -74,16 +92,33 @@ LL_AUTO_TYPE_STATIC_HOOK /*NOLINT*/ (
     bool&                                         g,
     class std::function<bool(class Vec3&)> const& h
 ) {
-    auto res = origin(a, b, c, d, e, f, g, h);
-    if (!flag) res *= cfg.CommonRailMul;
-    else {
-        flag  = false;
-        res  *= cfg.GoldenRailMul;
+    Vec3 vec = e;
+    Vec3 res;
+    if (cfg.EnableNewMode) {
+        if (a.getLegacyBlock().hasState("rail_data_bit") && *(a.getState<bool>(35)))
+            res = origin(a, b, c * cfg.GoldenRailMul, d, e, f, g, h);
+        else res = origin(a, b, c * cfg.CommonRailMul, d, e, f, g, h);
+    } else {
+        res = origin(a, b, c, d, e, f, g, h);
+        if (!flag) res *= cfg.CommonRailMul;
+        else {
+            flag  = false;
+            res  *= cfg.GoldenRailMul;
+        }
+        if (res.y > 0) res.y *= cfg.ClimbRailMul;
     }
-    if (res.y > 0) res.y *= cfg.ClimbRailMul;
+    if (cfg.EnableComeOutRailFix) {
+        if (eqf(0, vec.x) && !eqf(0, res.x)) {
+            res.z /= cfg.GoldenRailMul * cfg.GoldenRailMul;
+            // res.x /= cfg.GoldenRailMul * cfg.GoldenRailMul;
+        }
+        if (eqf(0, vec.z) && !eqf(res.z, 0)) {
+            // res.z /= cfg.GoldenRailMul * cfg.GoldenRailMul;
+            res.x /= cfg.GoldenRailMul * cfg.GoldenRailMul;
+        }
+    }
     return res;
 }
-
 #include <ll/api/service/GamingStatus.h>
 #include <mc/entity/components_json_legacy/PushableComponent.h>
 #include <mc/world/actor/Actor.h>
@@ -99,17 +134,16 @@ LL_AUTO_TYPE_INSTANCE_HOOK(minecartAABBHook, HookPriority::Normal, Actor, &Actor
     return origin();
 }
 // using RetT = ::std::pair<::Vec3, ::Vec3>;
-LL_AUTO_TYPE_INSTANCE_HOOK(
-    minecartPushHook,
-    HookPriority::Normal,
-    PushableComponent,
-    &PushableComponent::push,
-    void,
-    ::Actor& owner,
-    ::Actor& other,
-    bool     pushSelfOnly
-) /*NOLINT*/
-{
+LL_AUTO_TYPE_INSTANCE_HOOK(/*NOLINT*/
+                           minecartPushHook,
+                           HookPriority::Normal,
+                           PushableComponent,
+                           &PushableComponent::push,
+                           void,
+                           ::Actor& owner,
+                           ::Actor& other,
+                           bool     pushSelfOnly
+) {
     if (!cfg.EnableMinecartPushHook) {
         return origin(owner, other, pushSelfOnly);
     }
